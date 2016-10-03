@@ -90,19 +90,20 @@ window.onload = function() {
     gl.enable(gl.DEPTH_TEST);
     
     // Load shaders
-    programId = initShaders(gl, "vertex-shader", "fragment-shader");
+    programId = initShaders(gl, "2d-vertex-shader", "fragment-shader");
     
     // ######Create vertex buffer objects --- ADD CODE HERE #######
     var positionAttributeLocation = gl.getAttribLocation(programId, "a_position");
+    var resolutionUniformLocation = gl.getUniformLocation(programId, "u_resolution");
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     // three 2d points
     var positions = [
-      0, 1,
-      0, 0.5,
-      0, -0.5,
       0, 0,
-      0, -1,
+      512, 400,
+      512, 0,
+      0, 400,
+      512/2, 200,
     ];
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
@@ -119,13 +120,15 @@ window.onload = function() {
         positionAttributeLocation, size, type, normalize, stride, offset)
 
     //attribute vec4 a_position;
-    // webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-    // gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+    //gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     // // Clear the canvas
     // gl.clearColor(0, 0, 0, 0);
     // gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.useProgram(programId);
+    // set the resolution
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
     
     
 
