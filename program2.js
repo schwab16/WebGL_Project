@@ -42,18 +42,18 @@ function viewMethod() {
 }
 
 
-function getClickPosition(e) {
-    var xPosition = e.clientX;
-    var yPosition = e.clientY;
-    console.log(xPosition);
-    console.log(yPosition);
+function getCursorPosition(event) {
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+    console.log("x: " + x + " y: " + y);
 }
 
 // ########### The 2D Mode to draw the Bezier Curver --- ADD CODE HERE ###########
 
 function drawMethod() {
     document.getElementById("demo").innerHTML = "Draw Mode";
-    canvas.addEventListener("click", getClickPosition, false);
+    canvas.addEventListener("click", getCursorPosition, false);
     // Ensure OpenGL viewport is resized to match canvas dimensions
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
