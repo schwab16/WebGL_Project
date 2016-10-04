@@ -6,17 +6,20 @@ var moveMode = 0;
 var pointX;
 var pointY;
 
-var bezierM = [-1,  3, -3, 1,
+var bezierM = mat4(-1,  3, -3, 1,
                 3, -6,  3, 0,
                -3,  3,  0, 0,
-                1,  0,  0, 0];
+                1,  0,  0, 0);
 
-var testPoints = [1, 2, 3, 8,
+var testPoints = mat4(1, 2, 3, 8,
                   1, -1, 5, 3,
                   4, 3, 5, 4,
-                  1, 1, 1, 1];
+                  1, 1, 1, 1);
+
+var controlP;
 //
-var subdivisions;
+var subdivisions = 25.0;
+var bezierPos = [];
 
 //The method that responds to the 'View/Draw' button click to change the mode.
 function selectMode() {
@@ -107,6 +110,10 @@ function drawMethod() {
     // Clear out the viewport with solid black color
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
+    //setup buffer for control points line and bezier curve
+    // var positionBuffer = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
     var primitiveType = gl.LINE_STRIP;
     var offset = 0;
     var count = 4;
@@ -117,11 +124,39 @@ function drawMethod() {
     primitiveType = gl.POINTS;
     gl.drawArrays(primitiveType, offset, count);
 
+    // //draw the bezier curve
+    // var positionBufferBezier = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferBezier);
+
+    generateBezierCurve();
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bezierPos), gl.STATIC_DRAW);
+    var count = subdivisions+1;
+    primitiveType = gl.LINE_STRIP;
+    gl.drawArrays(primitiveType, offset, count);
+    console.log(bezierPos);
+    bezierPos = [];
 }
 
-function generatePointM() {
+function generateBezierCurve() {
+    controlP = mat4(positions[0],positions[2],positions[4],positions[6],
+                    positions[1],positions[3],positions[5],positions[7],
+                    1,1,1,1,
+                    1,1,1,1);
+
+    ans = mult(controlP,bezierM);
+    for(t = 0; t <= 1; t+=(1/subdivisions))
+    {
+        xt = ans[0][0]*Math.pow(t,3) + ans[0][1]*Math.pow(t,2) + ans[0][2]*t + ans[0][3];
+        bezierPos.push(xt);
+        yt = ans[1][0]*Math.pow(t,3) + ans[1][1]*Math.pow(t,2) + ans[1][2]*t + ans[1][3];
+        bezierPos.push(yt);
+    }
+    bezierPos.push(positions[6]);
+    bezierPos.push(positions[7]);
     
 }
+
+
 
 
 
@@ -153,9 +188,12 @@ window.onload = function() {
     // ######Create vertex buffer objects --- ADD CODE HERE #######
     var positionAttributeLocation = gl.getAttribLocation(programId, "a_position");
     var resolutionUniformLocation = gl.getUniformLocation(programId, "u_resolution");
+    
+    //setup buffer for control points line and bezier curve
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    // three 2d points
+    
+    //inital point position
     positions = [
       256, 50,
       256, 125,
@@ -176,22 +214,21 @@ window.onload = function() {
     gl.vertexAttribPointer(
         positionAttributeLocation, size, type, normalize, stride, offset)
 
-    //attribute vec4 a_position;
-    //webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-    //gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    // // Clear the canvas
-    // gl.clearColor(0, 0, 0, 0);
-    // gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.useProgram(programId);
     // set the resolution so we use pixels instead of default 0 to 1
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
     
     var ans = mult(testPoints,bezierM);
-    for(i = 0; i<ans.length; i++)
+    for(i = 0; i<bezierM.length; i++)
     {
         console.log(ans[i]);
     }
+
+    console.log(ans[1]);
+    console.log(ans[1][0]);
+
+
     
 
     
