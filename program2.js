@@ -83,11 +83,14 @@ function drawMethod() {
     // Clear out the viewport with solid black color
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
-    var primitiveType = gl.POINTS;
+    var primitiveType = gl.LINE_STRIP;
     var offset = 0;
-    var count = 5;
+    var count = 4;
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
+    primitiveType = gl.POINTS;
+    gl.drawArrays(primitiveType, offset, count);
+
 }
 
 
@@ -126,11 +129,10 @@ window.onload = function() {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     // three 2d points
     positions = [
-      0, 0,
-      512, 400,
-      512, 0,
-      0, 400,
-      512/2, 200,
+      256, 50,
+      256, 125,
+      256, 275,
+      256, 350,
     ];
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
