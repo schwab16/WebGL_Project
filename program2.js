@@ -1,7 +1,8 @@
 var canvas;
 var gl;
 var programId;
-var arrayPoints;
+var positions;
+var moveMode = 0;
 
 //The method that responds to the 'View/Draw' button click to change the mode.
 function selectMode() {
@@ -41,24 +42,40 @@ function viewMethod() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 }
 
+//get mouse position
+function movePoint(event) {
+    if(moveMode == 1)
+    {
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        console.log("x: " + x + " y: " + y);
+        for(i = 0; i < positions.length; i+=2)
+        {
+            j = i+1;
+            xpos = positions[i];
+            ypos = positions[j];
+            if((x <= xpos+5 && x >= xpos-5) && (y <= ypos+5 && y >= ypos-5))
+            {
+                console.log("Point: " + i);
+                positions[i] = x;
+                positions[j] = y;
+                drawMethod();
+            }
+        }
 
-function getCursorPosition(event) {
-    var rect = canvas.getBoundingClientRect();
-    var x = event.clientX - rect.left;
-    var y = event.clientY - rect.top;
-    console.log("x: " + x + " y: " + y);
+    }
+    
 }
+
 
 // ########### The 2D Mode to draw the Bezier Curver --- ADD CODE HERE ###########
 
 function drawMethod() {
     document.getElementById("demo").innerHTML = "Draw Mode";
-    canvas.addEventListener("click", getCursorPosition, false);
     // Ensure OpenGL viewport is resized to match canvas dimensions
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
-    
-    
     
     // Enable color; required for clearing the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -69,16 +86,26 @@ function drawMethod() {
     var primitiveType = gl.POINTS;
     var offset = 0;
     var count = 5;
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
-
-
 }
+
+
 
 // Initializations
 window.onload = function() {
    
     // Find the canvas on the page
     canvas = document.getElementById("gl-canvas");
+    //setup click and drag listeners
+    canvas.addEventListener("mousedown", function(){
+        moveMode = 1;
+    }, false);
+    canvas.addEventListener("mousemove", movePoint, false);
+    canvas.addEventListener("mouseup", function(){
+        moveMode = 0;
+    }, false);
+
 
     
     // Initialize a WebGL context
@@ -98,7 +125,7 @@ window.onload = function() {
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     // three 2d points
-    var positions = [
+    positions = [
       0, 0,
       512, 400,
       512, 0,
