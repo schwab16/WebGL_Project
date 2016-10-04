@@ -3,6 +3,20 @@ var gl;
 var programId;
 var positions;
 var moveMode = 0;
+var pointX;
+var pointY;
+
+var bezierM = [-1,  3, -3, 1,
+                3, -6,  3, 0,
+               -3,  3,  0, 0,
+                1,  0,  0, 0];
+
+var testPoints = [1, 2, 3, 8,
+                  1, -1, 5, 3,
+                  4, 3, 5, 4,
+                  1, 1, 1, 1];
+//
+var subdivisions;
 
 //The method that responds to the 'View/Draw' button click to change the mode.
 function selectMode() {
@@ -42,7 +56,7 @@ function viewMethod() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 }
 
-//get mouse position
+//get moves the current point to the current postion of the mouse
 function movePoint(event) {
     if(moveMode == 1)
     {
@@ -50,22 +64,32 @@ function movePoint(event) {
         var x = event.clientX - rect.left;
         var y = event.clientY - rect.top;
         console.log("x: " + x + " y: " + y);
-        for(i = 0; i < positions.length; i+=2)
-        {
-            j = i+1;
-            xpos = positions[i];
-            ypos = positions[j];
-            if((x <= xpos+5 && x >= xpos-5) && (y <= ypos+5 && y >= ypos-5))
-            {
-                console.log("Point: " + i);
-                positions[i] = x;
-                positions[j] = y;
-                drawMethod();
-            }
-        }
-
+        positions[pointX] = x;
+        positions[pointY] = y;
+        drawMethod();
     }
     
+}
+
+//checks the position of the mouse click to see if it is a valid point, if it is we set the points indexes and moveMode
+function checkPoint() {
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+    console.log("x: " + x + " y: " + y);
+    for(i = 0; i < positions.length; i+=2)
+    {
+        j = i+1;
+        xpos = positions[i];
+        ypos = positions[j];
+        if((x <= xpos+5 && x >= xpos-5) && (y <= ypos+5 && y >= ypos-5))
+        {
+            console.log("Point: " + i);
+            pointX = i;
+            pointY = j;
+            moveMode = 1;
+        }
+    }
 }
 
 
@@ -86,11 +110,17 @@ function drawMethod() {
     var primitiveType = gl.LINE_STRIP;
     var offset = 0;
     var count = 4;
+    //draws the lines
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
+    //draws the points
     primitiveType = gl.POINTS;
     gl.drawArrays(primitiveType, offset, count);
 
+}
+
+function generatePointM() {
+    
 }
 
 
@@ -101,9 +131,7 @@ window.onload = function() {
     // Find the canvas on the page
     canvas = document.getElementById("gl-canvas");
     //setup click and drag listeners
-    canvas.addEventListener("mousedown", function(){
-        moveMode = 1;
-    }, false);
+    canvas.addEventListener("mousedown", checkPoint, false);
     canvas.addEventListener("mousemove", movePoint, false);
     canvas.addEventListener("mouseup", function(){
         moveMode = 0;
@@ -156,9 +184,14 @@ window.onload = function() {
     // gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.useProgram(programId);
-    // set the resolution
+    // set the resolution so we use pixels instead of default 0 to 1
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
     
+    var ans = mult(testPoints,bezierM);
+    for(i = 0; i<ans.length; i++)
+    {
+        console.log(ans[i]);
+    }
     
 
     
