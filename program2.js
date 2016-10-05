@@ -16,10 +16,10 @@ var testPoints = mat4(1, 2, 3, 8,
                   4, 3, 5, 4,
                   1, 1, 1, 1);
 
-var controlP;
-//
+
 var subdivisions = 25.0;
 var bezierPos = [];
+var bezierPos2 = [];
 
 //The method that responds to the 'View/Draw' button click to change the mode.
 function selectMode() {
@@ -103,6 +103,7 @@ function drawMethod() {
     // Ensure OpenGL viewport is resized to match canvas dimensions
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
+    gl.lineWidth(1);
     
     // Enable color; required for clearing the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -116,7 +117,7 @@ function drawMethod() {
 
     var primitiveType = gl.LINE_STRIP;
     var offset = 0;
-    var count = 4;
+    var count = positions.length/2;
     //draws the lines
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
@@ -124,35 +125,61 @@ function drawMethod() {
     primitiveType = gl.POINTS;
     gl.drawArrays(primitiveType, offset, count);
 
-    // //draw the bezier curve
-    // var positionBufferBezier = gl.createBuffer();
-    // gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferBezier);
-
+    gl.lineWidth(3);
+    
+    //generate the bezier curve everytime the control points are moved
     generateBezierCurve();
+    //draw the bezier curve that we just generated
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bezierPos), gl.STATIC_DRAW);
     var count = subdivisions+1;
     primitiveType = gl.LINE_STRIP;
     gl.drawArrays(primitiveType, offset, count);
     console.log(bezierPos);
+    //clear the bezier postion array, so its ready for the next call
     bezierPos = [];
+
+    //draw the bezier curve that we just generated
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bezierPos2), gl.STATIC_DRAW);
+    var count = subdivisions+1;
+    primitiveType = gl.LINE_STRIP;
+    gl.drawArrays(primitiveType, offset, count);
+    console.log(bezierPos2);
+    //clear the bezier postion array, so its ready for the next call
+    bezierPos2 = [];
 }
 
 function generateBezierCurve() {
-    controlP = mat4(positions[0],positions[2],positions[4],positions[6],
+    //create the position matrix, from the current position of the control points
+    var controlP1 = mat4(positions[0],positions[2],positions[4],positions[6],
                     positions[1],positions[3],positions[5],positions[7],
                     1,1,1,1,
                     1,1,1,1);
 
-    ans = mult(controlP,bezierM);
+    var controlP2 = mat4(positions[6],positions[8],positions[10],positions[12],
+                    positions[7],positions[9],positions[11],positions[13],
+                    1,1,1,1,
+                    1,1,1,1);
+
+    ans = mult(controlP1,bezierM);
+    ans2 = mult(controlP2,bezierM);
+    //push the line segments for the number of subdivisions
     for(t = 0; t <= 1; t+=(1/subdivisions))
     {
         xt = ans[0][0]*Math.pow(t,3) + ans[0][1]*Math.pow(t,2) + ans[0][2]*t + ans[0][3];
         bezierPos.push(xt);
         yt = ans[1][0]*Math.pow(t,3) + ans[1][1]*Math.pow(t,2) + ans[1][2]*t + ans[1][3];
         bezierPos.push(yt);
+
+        xt2 = ans2[0][0]*Math.pow(t,3) + ans2[0][1]*Math.pow(t,2) + ans2[0][2]*t + ans2[0][3];
+        bezierPos2.push(xt2);
+        yt2 = ans2[1][0]*Math.pow(t,3) + ans2[1][1]*Math.pow(t,2) + ans2[1][2]*t + ans2[1][3];
+        bezierPos2.push(yt2);
     }
+    //hard code in the last point to draw, otherwise the end point won't be connected.
     bezierPos.push(positions[6]);
     bezierPos.push(positions[7]);
+    bezierPos2.push(positions[12]);
+    bezierPos2.push(positions[13]);
     
 }
 
@@ -195,11 +222,15 @@ window.onload = function() {
     
     //inital point position
     positions = [
-      256, 50,
-      256, 125,
-      256, 275,
-      256, 350,
+      256, 25,
+      256, canvas.height/6,
+      256, 2*canvas.height/6,
+      256, canvas.height/2,
+      256, 4*canvas.height/6,
+      256, 5*canvas.height/6,
+      256, canvas.height-25,
     ];
+    console.log(positions);
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
