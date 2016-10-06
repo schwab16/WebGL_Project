@@ -4,24 +4,6 @@
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
         <title>Programming Assignment 2</title>
 
-        <script id="vertex-shader" type="x-shader/x-vertex">
-            /////////////////////////////////////////////
-            // TODO: Write your 'vertex-shader' part here.
-            /////////////////////////////////////////////
-
-            //an attribute will receive data from a buffer
-            attribute vec4 a_position;
-
-            void main() { 
-                // gl_Position is a special variable a vertex shader
-                // is responsible for setting
-
-                gl_Position = a_position;
-                gl_PointSize = 10.0;
-                //glPointSize(5.0);
-            }
-        </script>
-
         <script id="fragment-shader" type="x-shader/x-fragment">
             /////////////////////////////////////////////
             // TODO: Write your 'fragment-shader' part here.
@@ -30,8 +12,9 @@
             // fragment shaders don't have a default precision so we need
             // to pick one. mediump is a good default
             precision mediump float;
+            uniform vec4 u_color;
             void main() { 
-                gl_FragColor = vec4(1, 0, 0.5, 1); // return redish-purple
+                gl_FragColor = u_color; // return redish-purple
             }
         </script>
 

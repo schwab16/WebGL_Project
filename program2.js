@@ -5,6 +5,8 @@ var positions;
 var moveMode = 0;
 var pointX;
 var pointY;
+var colorLocation;
+var highlightPoint = []; 
 
 var bezierM = mat4(-1,  3, -3, 1,
                 3, -6,  3, 0,
@@ -50,7 +52,7 @@ function viewMethod() {
     gl.viewportHeight = canvas.height;
     
     // Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
-    gl.clearColor(0.0, 0.7, 0.0, 1.0);
+    gl.clearColor(0.8, 0.8, 0.8, 1.0);
     
     // Enable color; required for clearing the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -69,6 +71,7 @@ function movePoint(event) {
         console.log("x: " + x + " y: " + y);
         positions[pointX] = x;
         positions[pointY] = y;
+        highlightPoint = [positions[pointX], positions[pointY]];
         drawMethod();
     }
     
@@ -91,6 +94,8 @@ function checkPoint() {
             pointX = i;
             pointY = j;
             moveMode = 1;
+            highlightPoint = [positions[i], positions[j]];
+            drawMethod();
         }
     }
 }
@@ -115,21 +120,35 @@ function drawMethod() {
     // var positionBuffer = gl.createBuffer();
     // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-    var primitiveType = gl.LINE_STRIP;
+    if(moveMode == 1)
+    {
+        var offset = 0;
+        var count = 1;
+        var primitiveType = gl.POINTS;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(highlightPoint), gl.STATIC_DRAW);
+        gl.uniform4f(colorLocation, 1, 0, 1, 1);
+        gl.drawArrays(primitiveType, offset, count);
+        console.log("DREW PRESSED POINT");
+    }
+
+    //draws the control points
+    var primitiveType = gl.POINTS;
     var offset = 0;
     var count = positions.length/2;
-    //draws the lines
+    gl.uniform4f(colorLocation, 0.47, 0.47, 0.47, 1);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
-    //draws the points
-    primitiveType = gl.POINTS;
-    gl.drawArrays(primitiveType, offset, count);
 
+    //draws the dotted lines
+    primitiveType = gl.LINE_STRIP;
+    gl.uniform4f(colorLocation, 0, 0, 0, 1);
+    gl.drawArrays(primitiveType, offset, count);
+    gl.uniform4f(colorLocation, 0, 0, 0, 1); //sets the color
     gl.lineWidth(3);
     
-    //generate the bezier curve everytime the control points are moved
+    //generate and draw the bezier curve everytime the control points are moved
     generateBezierCurve();
-    //draw the bezier curve that we just generated
+    gl.uniform4f(colorLocation, 1, 0, 0, 1);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bezierPos), gl.STATIC_DRAW);
     var count = subdivisions+1;
     primitiveType = gl.LINE_STRIP;
@@ -197,6 +216,7 @@ window.onload = function() {
     canvas.addEventListener("mousemove", movePoint, false);
     canvas.addEventListener("mouseup", function(){
         moveMode = 0;
+        drawMethod();
     }, false);
 
 
@@ -215,6 +235,7 @@ window.onload = function() {
     // ######Create vertex buffer objects --- ADD CODE HERE #######
     var positionAttributeLocation = gl.getAttribLocation(programId, "a_position");
     var resolutionUniformLocation = gl.getUniformLocation(programId, "u_resolution");
+    colorLocation = gl.getUniformLocation(programId, "u_color");
     
     //setup buffer for control points line and bezier curve
     var positionBuffer = gl.createBuffer();
