@@ -23,6 +23,30 @@ var subdivisions = 25.0;
 var bezierPos = [];
 var bezierPos2 = [];
 
+///////Functions for navigatoin elements and canvas
+
+
+/* When the user clicks on the button, 
+toggle between hiding and showing the dropdown content */
+function myFunction() {
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
+
 //The method that responds to the 'View/Draw' button click to change the mode.
 function selectMode() {
     var elem = document.getElementById("myButton1");
@@ -68,7 +92,7 @@ function movePoint(event) {
         var rect = canvas.getBoundingClientRect();
         var x = event.clientX - rect.left;
         var y = event.clientY - rect.top;
-        console.log("x: " + x + " y: " + y);
+        //console.log("x: " + x + " y: " + y);
         positions[pointX] = x;
         positions[pointY] = y;
         highlightPoint = [positions[pointX], positions[pointY]];
@@ -82,7 +106,7 @@ function checkPoint() {
     var rect = canvas.getBoundingClientRect();
     var x = event.clientX - rect.left;
     var y = event.clientY - rect.top;
-    console.log("x: " + x + " y: " + y);
+    //console.log("x: " + x + " y: " + y);
     for(i = 0; i < positions.length; i+=2)
     {
         j = i+1;
@@ -90,7 +114,7 @@ function checkPoint() {
         ypos = positions[j];
         if((x <= xpos+5 && x >= xpos-5) && (y <= ypos+5 && y >= ypos-5))
         {
-            console.log("Point: " + i);
+            //console.log("Point: " + i);
             pointX = i;
             pointY = j;
             moveMode = 1;
@@ -105,10 +129,15 @@ function checkPoint() {
 
 function drawMethod() {
     document.getElementById("demo").innerHTML = "Draw Mode";
+
+
     // Ensure OpenGL viewport is resized to match canvas dimensions
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
     gl.lineWidth(1);
+
+    // Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
+    gl.clearColor(0.8, 0.8, 0.8, 1.0);
     
     // Enable color; required for clearing the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -128,7 +157,7 @@ function drawMethod() {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(highlightPoint), gl.STATIC_DRAW);
         gl.uniform4f(colorLocation, 1, 0, 1, 1);
         gl.drawArrays(primitiveType, offset, count);
-        console.log("DREW PRESSED POINT");
+        //console.log("DREW PRESSED POINT");
     }
 
     //draws the control points
@@ -153,7 +182,7 @@ function drawMethod() {
     var count = subdivisions+1;
     primitiveType = gl.LINE_STRIP;
     gl.drawArrays(primitiveType, offset, count);
-    console.log(bezierPos);
+    //console.log(bezierPos);
     //clear the bezier postion array, so its ready for the next call
     bezierPos = [];
 
@@ -162,7 +191,7 @@ function drawMethod() {
     var count = subdivisions+1;
     primitiveType = gl.LINE_STRIP;
     gl.drawArrays(primitiveType, offset, count);
-    console.log(bezierPos2);
+    //console.log(bezierPos2);
     //clear the bezier postion array, so its ready for the next call
     bezierPos2 = [];
 }
@@ -271,14 +300,14 @@ window.onload = function() {
     // set the resolution so we use pixels instead of default 0 to 1
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
     
-    var ans = mult(testPoints,bezierM);
-    for(i = 0; i<bezierM.length; i++)
-    {
-        console.log(ans[i]);
-    }
+    // var ans = mult(testPoints,bezierM);
+    // for(i = 0; i<bezierM.length; i++)
+    // {
+    //     console.log(ans[i]);
+    // }
 
-    console.log(ans[1]);
-    console.log(ans[1][0]);
+    // console.log(ans[1]);
+    // console.log(ans[1][0]);
 
 
     
