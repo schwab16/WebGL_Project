@@ -28,8 +28,11 @@ var bezierPos2 = [];
 
 /* When the user clicks on the button, 
 toggle between hiding and showing the dropdown content */
-function myFunction() {
-    document.getElementById("myDropdown").classList.toggle("show");
+function openViewDropdown() {
+    document.getElementById("viewDropdown").classList.toggle("show");
+}
+function openDrawDropdown() {
+    document.getElementById("drawDropdown").classList.toggle("show");
 }
 
 // Close the dropdown menu if the user clicks outside of it
@@ -71,6 +74,9 @@ function selectMode() {
 
 function viewMethod() {
     document.getElementById("demo").innerHTML = "View Mode";
+    // This will enable the correct menu for view mode
+    document.getElementById("viewMenu").style.display = "block";
+    document.getElementById("drawMenu").style.display = "none";
     // Ensure OpenGL viewport is resized to match canvas dimensions
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
@@ -130,7 +136,10 @@ function checkPoint() {
 function drawMethod() {
     document.getElementById("demo").innerHTML = "Draw Mode";
 
-
+    // This will enable the correct menu for draw mode
+    document.getElementById("drawMenu").style.display = "block";
+    document.getElementById("viewMenu").style.display = "none";
+    
     // Ensure OpenGL viewport is resized to match canvas dimensions
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
@@ -299,6 +308,8 @@ window.onload = function() {
     gl.useProgram(programId);
     // set the resolution so we use pixels instead of default 0 to 1
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+    drawMethod();
     
     // var ans = mult(testPoints,bezierM);
     // for(i = 0; i<bezierM.length; i++)

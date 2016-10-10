@@ -62,14 +62,22 @@
         <script type="text/javascript" src="program2.js"></script>
         
         <!--Just the basic Button is provided. Add other Menu Options -->
-        <div>
+       <!--  <div>
             <input onclick="selectMode()" type="button" value="View Mode" id="myButton1" />
-        </div>
+        </div> -->
         <div class="dropdown">
-          <button onclick="myFunction()" class="dropbtn">Menu</button>
-          <div id="myDropdown" class="dropdown-content">
+          <button onclick="openViewDropdown()" id="viewMenu" class="dropbtn">Menu</button>
+          <div id="viewDropdown" class="dropdown-content">
             <a onclick="drawMethod()">Draw Mode</a>
+            <a onclick="viewMethod()">Quit</a>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button onclick="openDrawDropdown()" id="drawMenu" class="dropbtn">Menu</button>
+          <div id="drawDropdown" class="dropdown-content">
             <a onclick="viewMethod()">View Mode</a>
+            <a onclick="drawMethod()">Quit</a>
           </div>
         </div>
         
