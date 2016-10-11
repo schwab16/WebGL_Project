@@ -23,6 +23,8 @@ var subdivisions = 25.0;
 var bezierPos = [];
 var bezierPos2 = [];
 
+var axisRotation = [];
+
 ///////Functions for navigatoin elements and canvas
 
 
@@ -158,6 +160,13 @@ function drawMethod() {
     // var positionBuffer = gl.createBuffer();
     // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
+    //draws the dotted horizonbtal axis lines
+    primitiveType = gl.LINES;
+    var count = axisRotation.length/2;
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(axisRotation), gl.STATIC_DRAW);
+    gl.uniform4f(colorLocation, 0, 0, 0, 1);
+    gl.drawArrays(primitiveType, offset, count);
+
     if(moveMode == 1)
     {
         var offset = 0;
@@ -181,6 +190,7 @@ function drawMethod() {
     primitiveType = gl.LINE_STRIP;
     gl.uniform4f(colorLocation, 0, 0, 0, 1);
     gl.drawArrays(primitiveType, offset, count);
+
     gl.uniform4f(colorLocation, 0, 0, 0, 1); //sets the color
     gl.lineWidth(3);
     
@@ -281,15 +291,21 @@ window.onload = function() {
     
     //inital point position
     positions = [
-      256, 25,
-      256, canvas.height/6,
-      256, 2*canvas.height/6,
-      256, canvas.height/2,
-      256, 4*canvas.height/6,
-      256, 5*canvas.height/6,
-      256, canvas.height-25,
+      3*canvas.width/4, 25,
+      3*canvas.width/4, canvas.height/6,
+      3*canvas.width/4, 2*canvas.height/6,
+      3*canvas.width/4, canvas.height/2,
+      3*canvas.width/4, 4*canvas.height/6,
+      3*canvas.width/4, 5*canvas.height/6,
+      3*canvas.width/4, canvas.height-25,
     ];
-    console.log(positions);
+
+    for(i = 0; i < 50; i= i+2)
+    {
+        axisRotation[i] = canvas.width/2;
+        axisRotation[i+1] = (i+1)*canvas.height/50;
+    }
+    console.log(axisRotation);
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
