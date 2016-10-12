@@ -1,3 +1,7 @@
+// Isaac Schwab
+// schw1643@umn.edu
+
+//Variables
 var canvas;
 var gl;
 var programId;
@@ -7,6 +11,7 @@ var pointX;
 var pointY;
 var colorLocation;
 var highlightPoint = []; 
+var result;
 
 var bezierM = mat4(-1,  3, -3, 1,
                 3, -6,  3, 0,
@@ -93,10 +98,11 @@ function viewMethod() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 }
 
-//get moves the current point to the current postion of the mouse
+//moves the current point to the current postion of the mouse
 function movePoint(event) {
     if(moveMode == 1)
     {
+        //sets the x and y position relative to the drawing canvas
         var rect = canvas.getBoundingClientRect();
         var x = event.clientX - rect.left;
         var y = event.clientY - rect.top;
@@ -132,6 +138,39 @@ function checkPoint() {
     }
 }
 
+// This function handles creating the dotted lines between the control points
+function generateDottedLine() {
+    result = [];
+    for(i = 0; i < positions.length; i+=2)
+    {
+        //get array positions and declare variables for incrementing
+        var xstart = positions[i];
+        var ystart = positions[i+1];
+        console.log("Xstart: " + xstart + " Ystart: " + ystart);
+        var xend = positions[i+2];
+        var yend = positions[i+3];
+        console.log("Xend: " + xend + " Yend: " + yend);
+        var x_increment;
+        var y_increment
+        var x_dif = xend-xstart;
+        var y_dif = yend-ystart;
+        var stepping_limit;
+        result.push(xstart);
+        result.push(ystart);
+
+        // set stepping intervals by dividing distance by the number of steps needed
+        x_increment = x_dif / 20;
+        y_increment = y_dif / 20;
+        for(j = 0; j <= 20; j++)
+        {
+            result.push(xstart + (j * x_increment));
+            result.push(ystart + (j * y_increment));
+        }
+        result.push(xend);
+        result.push(yend);
+    }
+}
+
 
 // ########### The 2D Mode to draw the Bezier Curver --- ADD CODE HERE ###########
 
@@ -156,10 +195,6 @@ function drawMethod() {
     // Clear out the viewport with solid black color
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
-    //setup buffer for control points line and bezier curve
-    // var positionBuffer = gl.createBuffer();
-    // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
     //draws the dotted horizonbtal axis lines
     primitiveType = gl.LINES;
     var count = axisRotation.length/2;
@@ -167,6 +202,7 @@ function drawMethod() {
     gl.uniform4f(colorLocation, 0, 0, 0, 1);
     gl.drawArrays(primitiveType, offset, count);
 
+    //If a point is being moved then draw the current highlighted point
     if(moveMode == 1)
     {
         var offset = 0;
@@ -187,15 +223,18 @@ function drawMethod() {
     gl.drawArrays(primitiveType, offset, count);
 
     //draws the dotted lines
-    primitiveType = gl.LINE_STRIP;
+    generateDottedLine();
+    console.log(result);
+    primitiveType = gl.LINES;
+    count = result.length/2;
     gl.uniform4f(colorLocation, 0, 0, 0, 1);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(result), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
 
-    gl.uniform4f(colorLocation, 0, 0, 0, 1); //sets the color
-    gl.lineWidth(3);
     
     //generate and draw the bezier curve everytime the control points are moved
     generateBezierCurve();
+    gl.lineWidth(3);
     gl.uniform4f(colorLocation, 1, 0, 0, 1);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bezierPos), gl.STATIC_DRAW);
     var count = subdivisions+1;
@@ -205,7 +244,7 @@ function drawMethod() {
     //clear the bezier postion array, so its ready for the next call
     bezierPos = [];
 
-    //draw the bezier curve that we just generated
+    //draw the 2nd bezier curve that we just generated
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bezierPos2), gl.STATIC_DRAW);
     var count = subdivisions+1;
     primitiveType = gl.LINE_STRIP;
@@ -215,6 +254,7 @@ function drawMethod() {
     bezierPos2 = [];
 }
 
+//generates the position points for the bezier curves
 function generateBezierCurve() {
     //create the position matrix, from the current position of the control points
     var controlP1 = mat4(positions[0],positions[2],positions[4],positions[6],
@@ -227,11 +267,13 @@ function generateBezierCurve() {
                     1,1,1,1,
                     1,1,1,1);
 
+    //use the math from class to generate the martix of points
     ans = mult(controlP1,bezierM);
     ans2 = mult(controlP2,bezierM);
     //push the line segments for the number of subdivisions
     for(t = 0; t <= 1; t+=(1/subdivisions))
     {
+        //use the parametric equations to generate the correct point
         xt = ans[0][0]*Math.pow(t,3) + ans[0][1]*Math.pow(t,2) + ans[0][2]*t + ans[0][3];
         bezierPos.push(xt);
         yt = ans[1][0]*Math.pow(t,3) + ans[1][1]*Math.pow(t,2) + ans[1][2]*t + ans[1][3];
@@ -254,7 +296,7 @@ function generateBezierCurve() {
 
 
 
-// Initializations
+// Initializations and setting up the gl variables
 window.onload = function() {
    
     // Find the canvas on the page
@@ -268,7 +310,6 @@ window.onload = function() {
     }, false);
 
 
-    
     // Initialize a WebGL context
     gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) { 
@@ -300,6 +341,7 @@ window.onload = function() {
       3*canvas.width/4, canvas.height-25,
     ];
 
+    //initialize the rotation axis points
     for(i = 0; i < 50; i= i+2)
     {
         axisRotation[i] = canvas.width/2;
@@ -307,7 +349,6 @@ window.onload = function() {
     }
     console.log(axisRotation);
 
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     //tell atribute how to get data out of it, first turn the attribute on
     gl.enableVertexAttribArray(positionAttributeLocation);
@@ -327,17 +368,5 @@ window.onload = function() {
 
     drawMethod();
     
-    // var ans = mult(testPoints,bezierM);
-    // for(i = 0; i<bezierM.length; i++)
-    // {
-    //     console.log(ans[i]);
-    // }
-
-    // console.log(ans[1]);
-    // console.log(ans[1][0]);
-
-
-    
-
     
 };
