@@ -1,0 +1,116 @@
+<!-- Isaac Schwab -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+        <title>Programming Assignment 2</title>
+        <link rel="stylesheet" href="styles.css">
+        <p> </p>
+        <button id = "Button1">Increase Z</button>
+        <button id = "Button2">Decrease Z</button>
+        <button id = "Button3">Increase R</button>
+        <button id = "Button4">Decrease R</button>
+
+        <p> </p>
+        <button id = "Button5">Increase theta</button>
+        <button id = "Button6">Decrease theta</button>
+        <button id = "Button7">Increase phi</button>
+        <button id = "Button8">Decrease phi</button>
+        <p> </p>
+
+        <script id="fragment-shader" type="x-shader/x-fragment">
+            /////////////////////////////////////////////
+            // TODO: Write your 'fragment-shader' part here.
+            /////////////////////////////////////////////
+            
+            // fragment shaders don't have a default precision so we need
+            // to pick one. mediump is a good default
+            precision mediump float;
+            uniform vec4 u_color;
+            void main() { 
+                gl_FragColor = u_color; // return redish-purple
+            }
+        </script>
+
+        <script id="2d-vertex-shader" type="x-shader/x-fragment">
+            /////////////////////////////////////////////
+            // TODO: Write your 'fragment-shader' part here.
+            /////////////////////////////////////////////
+            
+            attribute vec2 a_position;
+ 
+            uniform vec2 u_resolution;
+             
+            void main() {
+            // convert the position from pixels to 0.0 to 1.0
+                vec2 zeroToOne = a_position / u_resolution;
+            
+                // convert from 0->1 to 0->2
+                vec2 zeroToTwo = zeroToOne * 2.0;
+             
+                // convert from 0->2 to -1->+1 (clipspace)
+                vec2 clipSpace = zeroToTwo - 1.0;
+             
+                gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                gl_PointSize = 10.0;
+
+            }
+        </script>
+
+        <!-- vertex shader -->
+        <script id="vertex-shader" type="x-shader/x-vertex">
+
+        attribute  vec4 vPosition;
+
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+
+        void main() 
+        {
+            gl_Position = projectionMatrix*modelViewMatrix*vPosition;
+            gl_PointSize = 3.0;
+        } 
+        </script>
+
+
+        <!-- Included in the folder but can also be Downloaded: http://www.cs.unm.edu/~angel/WebGL/7E/Common/angelCommon.zip -->
+        <script type="text/javascript" src="webgl-utils.js"></script>
+        <script type="text/javascript" src="initShaders.js"></script>
+        <script type="text/javascript" src="MV.js"></script>
+        
+    </head>
+
+    <body> 
+        <p id="demo">Let's Get Started!</p>
+
+        <canvas id="gl-canvas" width="1000" height="600">
+            Oops ... your browser doesn't support the HTML5 canvas element
+        </canvas>
+
+        <!-- Javascript File is included in the Folder -->
+        <script type="text/javascript" src="3d.js"></script>
+        
+        <!--Just the basic Button is provided. Add other Menu Options -->
+       <!--  <div>
+            <input onclick="selectMode()" type="button" value="View Mode" id="myButton1" />
+        </div> -->
+        <div class="dropdown">
+          <button onclick="openViewDropdown()" id="viewMenu" class="dropbtn">Menu</button>
+          <div id="viewDropdown" class="dropdown-content">
+            <a onclick="setupDraw()">Angles</a>
+            <a onclick="setupDraw()">Steps</a>
+            <a onclick="setupDraw()">Draw Mode</a>
+            <a onclick="viewMethod()">Quit</a>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button onclick="openDrawDropdown()" id="drawMenu" class="dropbtn">Menu</button>
+          <div id="drawDropdown" class="dropdown-content">
+            <a onclick="viewMethod()">View Mode</a>
+            <a onclick="drawMethod()">Quit</a>
+          </div>
+        </div>
+        
+    </body>
+</html>

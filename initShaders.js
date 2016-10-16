@@ -1,4 +1,4 @@
-//
+// Isaac Schwab
 //  initShaders.js
 //
 
