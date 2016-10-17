@@ -1,44 +1,43 @@
 // Isaac Schwab
 // schw1643@umn.edu
 
-//Variables
+// ********************************************************************************************* //
+// WebGL Variables
 var canvas;
 var gl;
 var programId;
 var program;
+// ********************************************************************************************* //
+// 2D Drawing Variables
 var positions;
-var moveMode = 0;
-var pointX;
-var pointY;
+var moveMode = 0; // boolean if points are being moved
+var pointX; // Currently selected point x position
+var pointY; // Currently selected point y position
 var colorLocation;
-var highlightPoint = []; 
-var result;
+var highlightPoint = [];
+var axisRotation = []; 
+var dottedLinePoints = [];
 var pointsArray = [];
-
 var bezierM = mat4(-1,  3, -3, 1,
                 3, -6,  3, 0,
                -3,  3,  0, 0,
                 1,  0,  0, 0);
 
-var testPoints = mat4(1, 1, 1, 1,
-                  1, 1, 1, 1,
-                  1, 1, 1, 1,
-                  1, 1, 1, 1);
-
-
-
-
-var subdivisions = 25.0;
+var subdivisions = 32.0;
 var bezierPos = [];
 var bezierPos2 = [];
-
-var axisRotation = [];
+// ********************************************************************************************* //
+// 3D Viewing Variables
+var pts_length;
 var bezier3dPos = [];
 var bezier3dPos2 = [];
 var points3D = [];
+var points3DSteps = [];
+var posSteps = [];
+var angles = 16;
+var steps = 16;
 
 //viewing parameters
-var angles = 32;
 var near = -10;
 var far = 10;
 var radius = 1.0;
@@ -126,22 +125,24 @@ function viewMethod() {
     document.getElementById("Button8").onclick = function(){phi -= dr;};
     // Ensure OpenGL viewport is resized to match canvas dimensions
 
-    var allBezierPoints = bezier3dPos.concat(bezier3dPos2);
-    var pts_length = allBezierPoints.length;
-    console.log(allBezierPoints);
-    var z = allBezierPoints[0][0];
-    console.log(z);
-    
-    var inc = 360/angles;
-
-    for(t = 0; t <= 360; t+=inc)
+    generate3DPoints();
+    console.log(points3DSteps[0]);
+    console.log(points3D);
+    //console.log(flatten(points3D));
+    for(i = 0; i < steps; i++)
     {
-        for(i = 0; i < pts_length; i++)
-        {
-            points3D.push(sweepPoints(allBezierPoints[i], radians(t)));
-        }
-    }
+        // for(j = 0; j < pts_length; j++)
+        // {
+        //     posSteps.concat(flatten(posSteps[i][j]));
+        // }
+       // console.log(flatten(points3DSteps[i]));
+        posSteps = posSteps.concat(points3DSteps[i]);
 
+        //console.log(flatten(points3DSteps[i]));
+        // posSteps.concat(flatten(points3DSteps[i]));
+    }
+    console.log(posSteps);
+    console.log(flatten(posSteps));
     gl.viewport( 0, 0, canvas.width, canvas.height );
     
     gl.clearColor( 0, 1.0, 1.0, 1.0 );
@@ -156,7 +157,7 @@ function viewMethod() {
 
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(points3D), gl.STATIC_DRAW );
+    
     
     var vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
@@ -192,8 +193,16 @@ var render = function() {
     gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
     gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
     gl.lineWidth(3); 
+
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(points3D), gl.STATIC_DRAW );
     var count = flatten(points3D).length;
-    gl.drawArrays(gl.LINES_STRIP, 0, count/4);
+    gl.drawArrays(gl.LINE_STRIP, 0, count/4);
+
+    
+
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(posSteps), gl.STATIC_DRAW );
+    count = flatten(posSteps).length;
+    gl.drawArrays(gl.LINE_STRIP, 0, count/4);
 
     requestAnimFrame(render);
 }
@@ -206,16 +215,51 @@ function sweepPoints(point, theta) {
     return vec4(x,y,z,1);
 }
 
+function generate3DPoints() {
+    var allBezierPoints = bezier3dPos.concat(bezier3dPos2);
+    pts_length = allBezierPoints.length;
+    console.log(pts_length);
+    //console.log(allBezierPoints);
+    var inc = 360/angles;
+    var step_inc = Math.floor(pts_length/steps);
+    var step_count = 0;
+    console.log(step_inc);
 
-//moves the current point to the current postion of the mouse
+    for(x = 0; x < steps; x++)
+    {
+        points3DSteps[x] = [];
+    }
+
+    // Sweep points for each angle
+    for(t = 0; t <= 360; t+=inc)
+    {
+        // Loops through each point of the bezier curve and rotates the point in 3D space
+        for(i = 0; i < pts_length; i++)
+        {
+            // Add the new 3D position of the point to the main 3D array
+            var temp_pt = sweepPoints(allBezierPoints[i], radians(t));
+            points3D.push(temp_pt);
+            if(step_count < steps && (i % step_inc == 0))
+            {
+                points3DSteps[step_count].push(temp_pt);
+                step_count++;
+            }
+        }
+        step_count = 0;
+    }
+    console.log(points3DSteps);
+}
+
+
+// moves the current point to the current postion of the mouse
 function movePoint(event) {
     if(moveMode == 1)
     {
-        //sets the x and y position relative to the drawing canvas
+        // sets the x and y position relative to the drawing canvas
         var rect = canvas.getBoundingClientRect();
         var x = event.clientX - rect.left;
         var y = event.clientY - rect.top;
-        //console.log("x: " + x + " y: " + y);
+        // update the current points x and y positions to the new cursor coordinates
         positions[pointX] = x;
         positions[pointY] = y;
         highlightPoint = [positions[pointX], positions[pointY]];
@@ -224,12 +268,14 @@ function movePoint(event) {
     
 }
 
-//checks the position of the mouse click to see if it is a valid point, if it is we set the points indexes and moveMode
+// checks the position of the mouse click to see if it is a valid point, if it is then enable
+// moveMode and also creates a highlight point to draw to the screen
 function checkPoint() {
+    // sets the x and y position of the cursor event relative to the canvas
     var rect = canvas.getBoundingClientRect();
     var x = event.clientX - rect.left;
     var y = event.clientY - rect.top;
-    //console.log("x: " + x + " y: " + y);
+    // loop through the position array checking if the cursor postion is within 5 pixels of a point
     for(i = 0; i < positions.length; i+=2)
     {
         j = i+1;
@@ -237,10 +283,10 @@ function checkPoint() {
         ypos = positions[j];
         if((x <= xpos+5 && x >= xpos-5) && (y <= ypos+5 && y >= ypos-5))
         {
-            //console.log("Point: " + i);
+            // store the indexes for the x and y position that are now selected
             pointX = i;
             pointY = j;
-            moveMode = 1;
+            moveMode = 1; // enable moveMode
             highlightPoint = [positions[i], positions[j]];
             drawMethod();
         }
@@ -249,34 +295,36 @@ function checkPoint() {
 
 // This function handles creating the dotted lines between the control points
 function generateDottedLine() {
-    result = [];
+    dottedLinePoints = [];
     for(i = 0; i < positions.length; i+=2)
     {
-        //get array positions and declare variables for incrementing
+        // get array starting positions and declare variables for incrementing
         var xstart = positions[i];
         var ystart = positions[i+1];
-        console.log("Xstart: " + xstart + " Ystart: " + ystart);
+        // ending positions
         var xend = positions[i+2];
         var yend = positions[i+3];
-        console.log("Xend: " + xend + " Yend: " + yend);
+        // variables for steppping calculations
         var x_increment;
         var y_increment
         var x_dif = xend-xstart;
         var y_dif = yend-ystart;
-        var stepping_limit;
-        result.push(xstart);
-        result.push(ystart);
+        var stepping_limit = 20;
+        dottedLinePoints.push(xstart);
+        dottedLinePoints.push(ystart);
 
         // set stepping intervals by dividing distance by the number of steps needed
-        x_increment = x_dif / 20;
-        y_increment = y_dif / 20;
-        for(j = 0; j <= 20; j++)
+        x_increment = x_dif / stepping_limit;
+        y_increment = y_dif / stepping_limit;
+        // Loop through creating points between the start and end points
+        for(j = 0; j <= stepping_limit; j++)
         {
-            result.push(xstart + (j * x_increment));
-            result.push(ystart + (j * y_increment));
+            dottedLinePoints.push(xstart + (j * x_increment));
+            dottedLinePoints.push(ystart + (j * y_increment));
         }
-        result.push(xend);
-        result.push(yend);
+        // handle the endpoints
+        dottedLinePoints.push(xend);
+        dottedLinePoints.push(yend);
     }
 }
 
@@ -338,11 +386,11 @@ function drawMethod() {
 
     //draws the dotted lines
     generateDottedLine();
-    console.log(result);
+    console.log(dottedLinePoints);
     primitiveType = gl.LINES;
-    count = result.length/2;
+    count = dottedLinePoints.length/2;
     gl.uniform4f(colorLocation, 0, 0, 0, 1);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(result), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dottedLinePoints), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
 
     
