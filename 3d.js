@@ -8,6 +8,7 @@ var gl;
 var programId;
 var program;
 // ********************************************************************************************* //
+var startup = 1;
 // 2D Drawing Variables
 var positions;
 var moveMode = 0; // boolean if points are being moved
@@ -23,7 +24,7 @@ var bezierM = mat4(-1,  3, -3, 1,
                -3,  3,  0, 0,
                 1,  0,  0, 0);
 
-var subdivisions = 32.0;
+var subdivisions = 64.0;
 var bezierPos = [];
 var bezierPos2 = [];
 // ********************************************************************************************* //
@@ -36,6 +37,7 @@ var points3DSteps = [];
 var posSteps = [];
 var angles = 16;
 var steps = 16;
+var continueRender = 1;
 
 //viewing parameters
 var near = -10;
@@ -54,7 +56,6 @@ var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
 var eye;
 
-var trans;
 
 const at = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
@@ -125,9 +126,14 @@ function viewMethod() {
     document.getElementById("Button8").onclick = function(){phi -= dr;};
     // Ensure OpenGL viewport is resized to match canvas dimensions
 
+    startup = 1;
+    continueRender = 1;
+
+    // Clear the arrays before they are generated
+    points3D = [];
+    posSteps = [];
     generate3DPoints();
-    console.log(points3DSteps[0]);
-    console.log(points3D);
+
     //console.log(flatten(points3D));
     for(i = 0; i <= steps; i++)
     {
@@ -183,29 +189,33 @@ function viewMethod() {
 }
 
 var render = function() {
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if(continueRender)
+    {
+        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
-    eye = vec3(radius*Math.sin(phi), radius*Math.sin(theta), 
-         radius*Math.cos(phi));
+        eye = vec3(radius*Math.sin(phi), radius*Math.sin(theta), 
+             radius*Math.cos(phi));
 
-    modelViewMatrix = lookAt(eye, at , up); 
-    projectionMatrix = ortho(left, right, bottom, ytop, near, far);
-    
-    gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-    gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
-    gl.lineWidth(3); 
+        modelViewMatrix = lookAt(eye, at , up); 
+        projectionMatrix = ortho(left, right, bottom, ytop, near, far);
+        
+        gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
+        gl.uniformMatrix4fv( projectionMatrixLoc, false, flatten(projectionMatrix) );
+        gl.lineWidth(3); 
 
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(points3D), gl.STATIC_DRAW );
-    var count = flatten(points3D).length;
-    gl.drawArrays(gl.POINTS, 0, count/4);
+        gl.bufferData( gl.ARRAY_BUFFER, flatten(points3D), gl.STATIC_DRAW );
+        var count = flatten(points3D).length;
+        gl.drawArrays(gl.POINTS, 0, count/4);
 
-    
+        
 
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(posSteps), gl.STATIC_DRAW );
-    count = flatten(posSteps).length;
-    gl.drawArrays(gl.LINE_STRIP, 0, count/4);
+        gl.bufferData( gl.ARRAY_BUFFER, flatten(posSteps), gl.STATIC_DRAW );
+        count = flatten(posSteps).length;
+        gl.drawArrays(gl.LINE_STRIP, 0, count/4);
 
-    requestAnimFrame(render);
+        
+        requestAnimFrame(render);
+    }    
 }
 
 function sweepPoints(point, theta) {
@@ -337,34 +347,24 @@ function generateDottedLine() {
 // ########### The 2D Mode to draw the Bezier Curver --- ADD CODE HERE ###########
 
 function drawMethod() {
-    document.getElementById("demo").innerHTML = "Draw Mode";
-
-    // This will enable the correct menu for draw mode
-    document.getElementById("drawMenu").style.display = "block";
-    document.getElementById("viewMenu").style.display = "none";
-
+    
+    console.log("DRAWING");
     bezierPos = [];
     bezierPos2 = [];
     bezier3dPos = [];
     bezier3dPos2 = [];
-    
-    // Ensure OpenGL viewport is resized to match canvas dimensions
-    gl.viewportWidth = canvas.width;
-    gl.viewportHeight = canvas.height;
-    gl.lineWidth(1);
-
-    // Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
-    gl.clearColor(0.8, 0.8, 0.8, 1.0);
-    
-    // Enable color; required for clearing the screen
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    ans = [];
+    ans2 = [];
     
     // Clear out the viewport with solid black color
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 
     //draws the dotted horizonbtal axis lines
-    primitiveType = gl.LINES;
+    var primitiveType = gl.LINES;
     var count = axisRotation.length/2;
+    gl.lineWidth(2);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(axisRotation), gl.STATIC_DRAW);
     gl.uniform4f(colorLocation, 0, 0, 0, 1);
     gl.drawArrays(primitiveType, offset, count);
@@ -386,11 +386,13 @@ function drawMethod() {
     var offset = 0;
     var count = positions.length/2;
     gl.uniform4f(colorLocation, 0.47, 0.47, 0.47, 1);
+    console.log(positions);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
 
     //draws the dotted lines
     generateDottedLine();
+    gl.lineWidth(1);
     console.log(dottedLinePoints);
     primitiveType = gl.LINES;
     count = dottedLinePoints.length/2;
@@ -418,6 +420,7 @@ function drawMethod() {
     gl.drawArrays(primitiveType, offset, count);
     //console.log(bezierPos2);
     //clear the bezier postion array, so its ready for the next call
+    console.log("END OF DRAW");
 }
 
 //generates the position points for the bezier curves
@@ -460,18 +463,78 @@ function generateBezierCurve() {
     
 }
 
-function convertBezierVec4() {
-    for(i = 0; i < bezierPos.length; i+=2)
-    {
-        pointsArray.push(vec4(bezierPos[i],bezierPos[i+1]),1);
-    }
-    for(i = 0; i < bezierPos2.length; i+=2)
-    {
-        pointsArray.push(vec4(bezierPos2[i],bezierPos2[i+1]),1);
-    }
 
+function setupDraw() {
+    
+    continueRender = 0;
+    if(startup == 1)
+    {
+        //setup click and drag listeners
+        canvas.addEventListener("mousedown", checkPoint, false);
+        canvas.addEventListener("mousemove", movePoint, false);
+        canvas.addEventListener("mouseup", function(){
+            moveMode = 0;
+            console.log("MOUSE UP");
+            drawMethod();
+        }, false);
+
+        document.getElementById("demo").innerHTML = "Draw Mode";
+
+        // This will enable the correct menu for draw mode
+        document.getElementById("drawMenu").style.display = "block";
+        document.getElementById("viewMenu").style.display = "none";
+        gl.enable(gl.DEPTH_TEST);
+    
+        // Load shaders
+        programId = initShaders(gl, "2d-vertex-shader", "fragment-shader");
+        
+        // ######Create vertex buffer objects --- ADD CODE HERE #######
+        var positionAttributeLocation = gl.getAttribLocation(programId, "a_position");
+        var resolutionUniformLocation = gl.getUniformLocation(programId, "u_resolution");
+        colorLocation = gl.getUniformLocation(programId, "u_color");
+        
+        //setup buffer for control points line and bezier curve
+        var positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+        //tell atribute how to get data out of it, first turn the attribute on
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        //specify how to pull the data out
+        var size = 2;          // 2 components per iteration
+        var type = gl.FLOAT;   // the data is 32bit floats
+        var normalize = false; // don't normalize the data
+        var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        var offset = 0;        // start at the beginning of the buffer
+        gl.vertexAttribPointer(
+            positionAttributeLocation, size, type, normalize, stride, offset)
+
+
+        gl.useProgram(programId);
+        // set the resolution so we use pixels instead of default 0 to 1
+        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+        // Ensure OpenGL viewport is resized to match canvas dimensions
+    gl.viewportWidth = canvas.width;
+    gl.viewportHeight = canvas.height;
+    gl.lineWidth(1);
+
+    // Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
+    gl.clearColor(0.8, 0.8, 0.8, 1.0);
+    
+    // Enable color; required for clearing the screen
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    
+    
+
+        startup = 0;
+
+        drawMethod();
+    }
+    else {
+        drawMethod();
+    }
+    
 }
-
 
 
 
@@ -480,14 +543,8 @@ window.onload = function() {
    
     // Find the canvas on the page
     canvas = document.getElementById("gl-canvas");
-    //setup click and drag listeners
-    canvas.addEventListener("mousedown", checkPoint, false);
-    canvas.addEventListener("mousemove", movePoint, false);
-    canvas.addEventListener("mouseup", function(){
-        moveMode = 0;
-        drawMethod();
-    }, false);
-
+    
+    
 
     // Initialize a WebGL context
     gl = WebGLUtils.setupWebGL(canvas);
@@ -495,19 +552,6 @@ window.onload = function() {
         alert("WebGL isn't available"); 
     }
     
-    gl.enable(gl.DEPTH_TEST);
-    
-    // Load shaders
-    programId = initShaders(gl, "2d-vertex-shader", "fragment-shader");
-    
-    // ######Create vertex buffer objects --- ADD CODE HERE #######
-    var positionAttributeLocation = gl.getAttribLocation(programId, "a_position");
-    var resolutionUniformLocation = gl.getUniformLocation(programId, "u_resolution");
-    colorLocation = gl.getUniformLocation(programId, "u_color");
-    
-    //setup buffer for control points line and bezier curve
-    var positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     
     //inital point position
     positions = [
@@ -529,28 +573,10 @@ window.onload = function() {
     console.log(axisRotation);
 
 
-    //tell atribute how to get data out of it, first turn the attribute on
-    gl.enableVertexAttribArray(positionAttributeLocation);
-    //specify how to pull the data out
-    var size = 2;          // 2 components per iteration
-    var type = gl.FLOAT;   // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0;        // start at the beginning of the buffer
-    gl.vertexAttribPointer(
-        positionAttributeLocation, size, type, normalize, stride, offset)
-
-
-    gl.useProgram(programId);
-    // set the resolution so we use pixels instead of default 0 to 1
-    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+    setupDraw();
     
-    trans = translate(-1*canvas.width/2,1,1);
-    rotate = 
-    console.log("TRANSLATE");
-    console.log(trans);
+    
 
-    drawMethod();
     
     
 };
