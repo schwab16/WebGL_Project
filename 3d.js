@@ -8,7 +8,8 @@ var gl;
 var programId;
 var program;
 // ********************************************************************************************* //
-var startup = 1;
+var startupDraw = 1;
+var startupView = 1;
 // 2D Drawing Variables
 var positions;
 var moveMode = 0; // boolean if points are being moved
@@ -24,7 +25,7 @@ var bezierM = mat4(-1,  3, -3, 1,
                -3,  3,  0, 0,
                 1,  0,  0, 0);
 
-var subdivisions = 64.0;
+var subdivisions = 128.0;
 var bezierPos = [];
 var bezierPos2 = [];
 // ********************************************************************************************* //
@@ -35,9 +36,12 @@ var bezier3dPos2 = [];
 var points3D = [];
 var points3DSteps = [];
 var posSteps = [];
-var angles = 16;
-var steps = 16;
+var angles = 32;
+var steps = 32;
 var continueRender = 1;
+var dragMode = 0;
+var clickX;
+var clickY;
 
 //viewing parameters
 var near = -10;
@@ -47,10 +51,10 @@ var theta  = 1.0;
 var phi    = 0.0;
 var dr = 5.0 * Math.PI/180.0;
 
-var left = -2.0;
-var right = 2.0;
-var ytop = 2.0;
-var bottom = -2.0;
+var left = -1.0;
+var right = 1.0;
+var ytop = 1.0;
+var bottom = -1.0;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
@@ -108,25 +112,133 @@ function selectMode() {
 
 
 // ########### The 3D Mode for Viewing the Surface of Revolution --- ADD CODE HERE ###########
+function changeView() {
+    if(dragMode)
+    {
+        // sets the x and y position of the cursor event relative to the canvas
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+
+        var x_change = x - clickX;
+        var y_change = y - clickY;
+
+        phi += (x_change/4) * (Math.PI/360);
+        theta += (y_change/4) * (Math.PI/360);
+
+
+    }
+}
+
+function getClick() {
+    var rect = canvas.getBoundingClientRect();
+    clickX = event.clientX - rect.left;
+    clickY = event.clientY - rect.top;
+    dragMode = 1;
+}
+
+function endChangeView() {
+    dragMode = 0;
+    console.log("MOUSE UP");
+    viewMethod();
+}
+
+function changeZoom(event) {
+    var key = event.key;
+    if(key == "." || key == ">")
+    {
+        left  += 0.1; 
+        right -= 0.1;
+        ytop -= 0.1;
+        bottom += 0.1;
+    }
+    else if(key == "," || key == "<")
+    {
+        left  -= 0.1; 
+        right += 0.1;
+        ytop += 0.1;
+        bottom -= 0.1;
+    }
+}
+
+function setupView() {
+    if(startupView)
+    {
+        document.getElementById("demo").innerHTML = "View Mode";
+        // This will enable the correct menu for view mode
+        document.getElementById("viewMenu").style.display = "block";
+        document.getElementById("drawMenu").style.display = "none";
+
+        // buttons to change viewing parameters
+        document.getElementById("Button1").onclick = function(){
+            left  -= 0.5; 
+            right += 0.5;
+            ytop += 0.5;
+            bottom -= 0.5;
+        };
+        document.getElementById("Button2").onclick = function(){
+            left  += 0.5; 
+            right -= 0.5;
+            ytop -= 0.5;
+            bottom += 0.5;
+        };
+        document.getElementById("Button3").onclick = function(){radius *= 1.1;};
+        document.getElementById("Button4").onclick = function(){radius *= 0.9;};
+        document.getElementById("Button5").onclick = function(){theta += dr;};
+        document.getElementById("Button6").onclick = function(){theta -= dr;};
+        document.getElementById("Button7").onclick = function(){phi += dr;};
+        document.getElementById("Button8").onclick = function(){phi -= dr;};
+
+        //setup click and drag listeners
+        canvas.removeEventListener("mousedown", checkPoint, false);
+        canvas.removeEventListener("mousemove", movePoint, false);
+        canvas.removeEventListener("mouseup", endMove, false);
+
+        //setup click and drag listeners
+        canvas.addEventListener("mousedown", getClick, false);
+        canvas.addEventListener("mousemove", changeView, false);
+        canvas.addEventListener("mouseup", endChangeView, false);
+        document.addEventListener("keydown", changeZoom, false);
+
+
+        //
+        //  Load shaders and initialize attribute buffers
+        //
+        var program = initShaders( gl, "vertex-shader", "fragment-shader" );
+        gl.useProgram( program );
+
+        var vBuffer = gl.createBuffer();
+        gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+        
+        
+        var vPosition = gl.getAttribLocation( program, "vPosition" );
+        gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
+        gl.enableVertexAttribArray( vPosition );
+         
+        modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
+        projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
+
+        gl.viewport( 0, 0, canvas.width, canvas.height );
+        
+        gl.clearColor( 0, 1.0, 1.0, 1.0 );
+        
+        gl.enable(gl.DEPTH_TEST);
+
+        startupView = 0;
+
+        viewMethod();
+    }
+    else {
+        viewMethod();
+    }
+    
+}
 
 function viewMethod() {
-    document.getElementById("demo").innerHTML = "View Mode";
-    // This will enable the correct menu for view mode
-    document.getElementById("viewMenu").style.display = "block";
-    document.getElementById("drawMenu").style.display = "none";
-
-    // buttons to change viewing parameters
-    document.getElementById("Button1").onclick = function(){near  *= 1.1; far *= 1.1;};
-    document.getElementById("Button2").onclick = function(){near *= 0.9; far *= 0.9;};
-    document.getElementById("Button3").onclick = function(){radius *= 1.1;};
-    document.getElementById("Button4").onclick = function(){radius *= 0.9;};
-    document.getElementById("Button5").onclick = function(){theta += dr;};
-    document.getElementById("Button6").onclick = function(){theta -= dr;};
-    document.getElementById("Button7").onclick = function(){phi += dr;};
-    document.getElementById("Button8").onclick = function(){phi -= dr;};
+    
     // Ensure OpenGL viewport is resized to match canvas dimensions
 
-    startup = 1;
+    startupDraw = 1;
     continueRender = 1;
 
     // Clear the arrays before they are generated
@@ -134,44 +246,14 @@ function viewMethod() {
     posSteps = [];
     generate3DPoints();
 
-    //console.log(flatten(points3D));
     for(i = 0; i <= steps; i++)
     {
-        // for(j = 0; j < pts_length; j++)
-        // {
-        //     posSteps.concat(flatten(posSteps[i][j]));
-        // }
+
         console.log(i);
         console.log(flatten(points3DSteps[i]));
         posSteps = posSteps.concat(points3DSteps[i]);
-
-        //console.log(flatten(points3DSteps[i]));
-        // posSteps.concat(flatten(points3DSteps[i]));
     }
-    //console.log(posSteps);
-    //console.log(flatten(posSteps));
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    
-    gl.clearColor( 0, 1.0, 1.0, 1.0 );
-    
-    gl.enable(gl.DEPTH_TEST);
 
-    //
-    //  Load shaders and initialize attribute buffers
-    //
-    var program = initShaders( gl, "vertex-shader", "fragment-shader" );
-    gl.useProgram( program );
-
-    var vBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-    
-    
-    var vPosition = gl.getAttribLocation( program, "vPosition" );
-    gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vPosition );
-     
-    modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
-    projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
 
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
@@ -220,8 +302,9 @@ var render = function() {
 
 function sweepPoints(point, theta) {
     var adjX = point[0] - canvas.width/2;
+    var adjY = point[1] - canvas.height/2;
     var x = (adjX/canvas.width * Math.cos(theta)) + (point[2] * Math.sin(theta));
-    var y = -1*point[1]/canvas.height;
+    var y = -1*adjY/canvas.height;
     var z = (-1*adjX/canvas.width * Math.sin(theta)) + (point[2] * Math.cos(theta));
     return vec4(x,y,z,1);
 }
@@ -347,6 +430,7 @@ function generateDottedLine() {
 // ########### The 2D Mode to draw the Bezier Curver --- ADD CODE HERE ###########
 
 function drawMethod() {
+    startupView = 1;
     
     console.log("DRAWING");
     bezierPos = [];
@@ -463,20 +547,29 @@ function generateBezierCurve() {
     
 }
 
+function endMove() {
+    moveMode = 0;
+    console.log("MOUSE UP");
+    drawMethod();
+}
+
 
 function setupDraw() {
     
     continueRender = 0;
-    if(startup == 1)
+    if(startupDraw == 1)
     {
+        if(startupView == 0)
+        {
+            canvas.removeEventListener("mousedown", getClick, false);
+            canvas.removeEventListener("mousemove", changeView, false);
+            canvas.removeEventListener("mouseup", endChangeView, false);
+        }
+
         //setup click and drag listeners
         canvas.addEventListener("mousedown", checkPoint, false);
         canvas.addEventListener("mousemove", movePoint, false);
-        canvas.addEventListener("mouseup", function(){
-            moveMode = 0;
-            console.log("MOUSE UP");
-            drawMethod();
-        }, false);
+        canvas.addEventListener("mouseup", endMove, false);
 
         document.getElementById("demo").innerHTML = "Draw Mode";
 
@@ -514,20 +607,16 @@ function setupDraw() {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
         // Ensure OpenGL viewport is resized to match canvas dimensions
-    gl.viewportWidth = canvas.width;
-    gl.viewportHeight = canvas.height;
-    gl.lineWidth(1);
+        gl.viewportWidth = canvas.width;
+        gl.viewportHeight = canvas.height;
+        gl.lineWidth(1);
 
-    // Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
-    gl.clearColor(0.8, 0.8, 0.8, 1.0);
-    
-    // Enable color; required for clearing the screen
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    
-    
-
-        startup = 0;
-
+        // Set screen clear color to R, G, B, alpha; where 0.0 is 0% and 1.0 is 100%
+        gl.clearColor(0.8, 0.8, 0.8, 1.0);
+        
+        // Enable color; required for clearing the screen
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        startupDraw = 0;
         drawMethod();
     }
     else {
