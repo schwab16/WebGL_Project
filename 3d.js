@@ -129,20 +129,21 @@ function viewMethod() {
     console.log(points3DSteps[0]);
     console.log(points3D);
     //console.log(flatten(points3D));
-    for(i = 0; i < steps; i++)
+    for(i = 0; i <= steps; i++)
     {
         // for(j = 0; j < pts_length; j++)
         // {
         //     posSteps.concat(flatten(posSteps[i][j]));
         // }
-       // console.log(flatten(points3DSteps[i]));
+        console.log(i);
+        console.log(flatten(points3DSteps[i]));
         posSteps = posSteps.concat(points3DSteps[i]);
 
         //console.log(flatten(points3DSteps[i]));
         // posSteps.concat(flatten(points3DSteps[i]));
     }
-    console.log(posSteps);
-    console.log(flatten(posSteps));
+    //console.log(posSteps);
+    //console.log(flatten(posSteps));
     gl.viewport( 0, 0, canvas.width, canvas.height );
     
     gl.clearColor( 0, 1.0, 1.0, 1.0 );
@@ -196,7 +197,7 @@ var render = function() {
 
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points3D), gl.STATIC_DRAW );
     var count = flatten(points3D).length;
-    gl.drawArrays(gl.LINE_STRIP, 0, count/4);
+    gl.drawArrays(gl.POINTS, 0, count/4);
 
     
 
@@ -223,9 +224,9 @@ function generate3DPoints() {
     var inc = 360/angles;
     var step_inc = Math.floor(pts_length/steps);
     var step_count = 0;
-    console.log(step_inc);
+    //console.log(step_inc);
 
-    for(x = 0; x < steps; x++)
+    for(x = 0; x <= steps; x++)
     {
         points3DSteps[x] = [];
     }
@@ -244,10 +245,14 @@ function generate3DPoints() {
                 points3DSteps[step_count].push(temp_pt);
                 step_count++;
             }
+            if(i == pts_length-1)
+            {
+                points3DSteps[steps].push(temp_pt);
+            }
         }
         step_count = 0;
     }
-    console.log(points3DSteps);
+    //console.log(points3DSteps);
 }
 
 
