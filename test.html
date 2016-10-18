@@ -11,9 +11,9 @@
           <button onclick="openViewDropdown()" id="viewMenu" class="dropbtn">Menu</button>
           <div id="viewDropdown" class="dropdown-content">
             <a onclick="getAngles()">Angles</a>
-            <a onclick="setupDraw()">Steps</a>
+            <a onclick="getSteps()">Steps</a>
             <a onclick="setupDraw()">Draw Mode</a>
-            <a onclick="viewMethod()">Quit</a>
+            <a onclick="quitMethod()">Quit</a>
           </div>
         </div>
 
@@ -21,18 +21,13 @@
           <button onclick="openDrawDropdown()" id="drawMenu" class="dropbtn">Menu</button>
           <div id="drawDropdown" class="dropdown-content">
             <a onclick="setupView()">View Mode</a>
-            <a onclick="drawMethod()">Quit</a>
+            <a onclick="quitMethod()">Quit</a>
           </div>
         </div>
         <p> </p>
 
         <script id="fragment-shader" type="x-shader/x-fragment">
-            /////////////////////////////////////////////
-            // TODO: Write your 'fragment-shader' part here.
-            /////////////////////////////////////////////
-            
-            // fragment shaders don't have a default precision so we need
-            // to pick one. mediump is a good default
+
             precision mediump float;
             uniform vec4 u_color;
             void main() { 
@@ -41,9 +36,6 @@
         </script>
 
         <script id="2d-vertex-shader" type="x-shader/x-fragment">
-            /////////////////////////////////////////////
-            // TODO: Write your 'fragment-shader' part here.
-            /////////////////////////////////////////////
             
             attribute vec2 a_position;
  
@@ -79,9 +71,6 @@
             gl_PointSize = 3.0;
         } 
         </script>
-
-
-        <!-- Included in the folder but can also be Downloaded: http://www.cs.unm.edu/~angel/WebGL/7E/Common/angelCommon.zip -->
         <script type="text/javascript" src="webgl-utils.js"></script>
         <script type="text/javascript" src="initShaders.js"></script>
         <script type="text/javascript" src="MV.js"></script>
@@ -89,20 +78,11 @@
     </head>
 
     <body> 
-
-
         <canvas id="gl-canvas" width="1000" height="600">
             Oops ... your browser doesn't support the HTML5 canvas element
         </canvas>
 
         <!-- Javascript File is included in the Folder -->
-        <script type="text/javascript" src="3d.js"></script>
-        
-        <!--Just the basic Button is provided. Add other Menu Options -->
-       <!--  <div>
-            <input onclick="selectMode()" type="button" value="View Mode" id="myButton1" />
-        </div> -->
-        
-        
+        <script type="text/javascript" src="program2_script.js"></script>
     </body>
 </html>
