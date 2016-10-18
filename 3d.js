@@ -47,8 +47,8 @@ var clickY;
 var near = -10;
 var far = 10;
 var radius = 1.0;
-var theta  = 1.0;
-var phi    = 0.0;
+var theta  = 0.5;
+var phi    = 0.5;
 var dr = 5.0 * Math.PI/180.0;
 
 var left = -1.0;
@@ -91,6 +91,18 @@ window.onclick = function(event) {
   }
 }
 
+function getAngles() {
+    var newAngle = prompt("Enter the number of angles to sweep out the surface:");
+    console.log(typeof newAngle);
+    newAngle = parseInt(newAngle);
+    console.log(typeof newAngle);
+    if (newAngle!= null && newAngle >= 4) {
+        angles = newAngle;
+        viewMethod();
+    }
+}
+
+
 //The method that responds to the 'View/Draw' button click to change the mode.
 function selectMode() {
     var elem = document.getElementById("myButton1");
@@ -123,8 +135,21 @@ function changeView() {
         var x_change = x - clickX;
         var y_change = y - clickY;
 
-        phi += (x_change/4) * (Math.PI/360);
-        theta += (y_change/4) * (Math.PI/360);
+
+        var phi_inc = (x_change/90) * (Math.PI/360);
+        var theta_inc = (y_change/90) * (Math.PI/360);
+        phi -= phi_inc;
+        // if(phi-phi_inc < 1 && phi-phi_inc > 0)
+        // {
+            
+        // }
+        if(theta+theta_inc <= 1.5 && theta+theta_inc >= -0.5)
+        {
+            theta += theta_inc;
+        }
+
+        
+        console.log(theta);
 
 
     }
@@ -139,7 +164,7 @@ function getClick() {
 
 function endChangeView() {
     dragMode = 0;
-    console.log("MOUSE UP");
+    //console.log("MOUSE UP");
     viewMethod();
 }
 
@@ -169,25 +194,6 @@ function setupView() {
         document.getElementById("viewMenu").style.display = "block";
         document.getElementById("drawMenu").style.display = "none";
 
-        // buttons to change viewing parameters
-        document.getElementById("Button1").onclick = function(){
-            left  -= 0.5; 
-            right += 0.5;
-            ytop += 0.5;
-            bottom -= 0.5;
-        };
-        document.getElementById("Button2").onclick = function(){
-            left  += 0.5; 
-            right -= 0.5;
-            ytop -= 0.5;
-            bottom += 0.5;
-        };
-        document.getElementById("Button3").onclick = function(){radius *= 1.1;};
-        document.getElementById("Button4").onclick = function(){radius *= 0.9;};
-        document.getElementById("Button5").onclick = function(){theta += dr;};
-        document.getElementById("Button6").onclick = function(){theta -= dr;};
-        document.getElementById("Button7").onclick = function(){phi += dr;};
-        document.getElementById("Button8").onclick = function(){phi -= dr;};
 
         //setup click and drag listeners
         canvas.removeEventListener("mousedown", checkPoint, false);
@@ -249,8 +255,8 @@ function viewMethod() {
     for(i = 0; i <= steps; i++)
     {
 
-        console.log(i);
-        console.log(flatten(points3DSteps[i]));
+        //console.log(i);
+        //console.log(flatten(points3DSteps[i]));
         posSteps = posSteps.concat(points3DSteps[i]);
     }
 
@@ -259,6 +265,7 @@ function viewMethod() {
             
     eye = vec3(radius*Math.sin(theta)*Math.cos(phi), 
         radius*Math.sin(theta)*Math.sin(phi), radius*Math.cos(theta));
+    console.log(eye);
 
     modelViewMatrix = lookAt(eye, at , up);
     projectionMatrix = ortho(left, right, bottom, ytop, near, far);
@@ -312,7 +319,7 @@ function sweepPoints(point, theta) {
 function generate3DPoints() {
     var allBezierPoints = bezier3dPos.concat(bezier3dPos2);
     pts_length = allBezierPoints.length;
-    console.log(pts_length);
+    //console.log(pts_length);
     //console.log(allBezierPoints);
     var inc = 360/angles;
     var step_inc = Math.floor(pts_length/steps);

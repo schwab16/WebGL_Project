@@ -6,16 +6,24 @@
         <title>Programming Assignment 2</title>
         <link rel="stylesheet" href="styles.css">
         <p> </p>
-        <button id = "Button1">Increase Z</button>
-        <button id = "Button2">Decrease Z</button>
-        <button id = "Button3">Increase R</button>
-        <button id = "Button4">Decrease R</button>
+        <p id="demo">Let's Get Started!</p>
+        <div class="dropdown">
+          <button onclick="openViewDropdown()" id="viewMenu" class="dropbtn">Menu</button>
+          <div id="viewDropdown" class="dropdown-content">
+            <a onclick="getAngles()">Angles</a>
+            <a onclick="setupDraw()">Steps</a>
+            <a onclick="setupDraw()">Draw Mode</a>
+            <a onclick="viewMethod()">Quit</a>
+          </div>
+        </div>
 
-        <p> </p>
-        <button id = "Button5">Increase theta</button>
-        <button id = "Button6">Decrease theta</button>
-        <button id = "Button7">Increase phi</button>
-        <button id = "Button8">Decrease phi</button>
+        <div class="dropdown">
+          <button onclick="openDrawDropdown()" id="drawMenu" class="dropbtn">Menu</button>
+          <div id="drawDropdown" class="dropdown-content">
+            <a onclick="setupView()">View Mode</a>
+            <a onclick="drawMethod()">Quit</a>
+          </div>
+        </div>
         <p> </p>
 
         <script id="fragment-shader" type="x-shader/x-fragment">
@@ -81,7 +89,7 @@
     </head>
 
     <body> 
-        <p id="demo">Let's Get Started!</p>
+
 
         <canvas id="gl-canvas" width="1000" height="600">
             Oops ... your browser doesn't support the HTML5 canvas element
@@ -94,23 +102,7 @@
        <!--  <div>
             <input onclick="selectMode()" type="button" value="View Mode" id="myButton1" />
         </div> -->
-        <div class="dropdown">
-          <button onclick="openViewDropdown()" id="viewMenu" class="dropbtn">Menu</button>
-          <div id="viewDropdown" class="dropdown-content">
-            <a onclick="setupDraw()">Angles</a>
-            <a onclick="setupDraw()">Steps</a>
-            <a onclick="setupDraw()">Draw Mode</a>
-            <a onclick="viewMethod()">Quit</a>
-          </div>
-        </div>
-
-        <div class="dropdown">
-          <button onclick="openDrawDropdown()" id="drawMenu" class="dropbtn">Menu</button>
-          <div id="drawDropdown" class="dropdown-content">
-            <a onclick="setupView()">View Mode</a>
-            <a onclick="drawMethod()">Quit</a>
-          </div>
-        </div>
+        
         
     </body>
 </html>
